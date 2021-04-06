@@ -1,15 +1,17 @@
-module btn (
-    input btn, clk,
+`timescale 1ns / 1ps
+
+module button(
+    input btn,clk,
     output reg pulse
 );
     reg preBtn;
     always @(posedge clk)
-        preBtn <= btn;
-    
+        preBtn<=btn;
     always @(posedge clk)
-        if (!preBtn && btn)
-            pulse = 1;
-        else pulse = 0;
+        if((!preBtn)&&btn)
+            pulse=1;
+        else
+            pulse=0;
 endmodule
 
 module fsm #(parameter WIDTH = 7) (
@@ -22,22 +24,25 @@ module fsm #(parameter WIDTH = 7) (
     reg [WIDTH-1: 0] curValue, lastValue;
     wire [WIDTH-1: 0] cur, last, next;
     wire [2: 0] add;
-    wire z, enClear;
+    wire z;
     reg [31: 0] count;
-
+    wire pause;
+    button btn(en, clk, pause);
     //part1
-    btn btn(en, clk, enClear);
     always @(posedge clk) begin
-        if (enClear) begin
+        if (pause) begin
             case (curState)
                 START: nextState = FIRST;
                 FIRST: nextState = SECOND;
-                SECOND: nextState = NORMAL;
+                SECOND: begin
+                    nextState = NORMAL;
+                end
                 default: nextState = NORMAL;
             endcase
         end
         else nextState = curState;
     end
+    
     
     
     //part2
@@ -53,7 +58,7 @@ module fsm #(parameter WIDTH = 7) (
     assign cur = curValue;
     assign f = curValue;
     always @(posedge clk) begin
-        if (enClear) begin
+        if (pause) begin
             case (curState)
                 START: begin
                     curValue <= 0;
@@ -61,7 +66,7 @@ module fsm #(parameter WIDTH = 7) (
                 end
                 FIRST: begin
                     curValue <= d;
-                    lastValue <= curValue;
+                    lastValue <= d;
                 end
                 SECOND: begin
                     curValue <= d;
